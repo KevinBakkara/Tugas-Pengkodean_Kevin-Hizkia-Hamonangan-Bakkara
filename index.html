@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Aplikasi Inventori & Penjualan</title>
+
+  <!-- CSS Langsung di dalam HTML -->
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background: #f1f3f6;
+      color: #333;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #007bff;
+    }
+
+    h2 {
+      margin-top: 30px;
+      color: #333;
+      border-left: 5px solid #007bff;
+      padding-left: 10px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      margin-top: 15px;
+    }
+
+    input, select, button {
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    input:focus, select:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 15px;
+      border-collapse: collapse;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    tr:hover {
+      background-color: #e9ecef;
+    }
+
+    td button {
+      padding: 5px 10px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    td button:hover {
+      background: darkred;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🛍️ Aplikasi Inventori & Penjualan</h1>
+
+    <!-- Form Tambah Produk -->
+    <section>
+      <h2>Tambah Produk</h2>
+      <form id="formTambahBarang">
+        <input type="text" id="namaBarang" placeholder="Nama Produk" required />
+        <input type="number" id="stokBarang" placeholder="Jumlah Stok" required />
+        <input type="number" id="hargaBarang" placeholder="Harga per Unit" required />
+        <button type="submit">Tambah Produk</button>
+      </form>
+    </section>
+
+    <!-- Daftar Stok -->
+    <section>
+      <h2>Stok Produk</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Nama</th>
+            <th>Stok</th>
+            <th>Harga</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tabelStok"></tbody>
+      </table>
+    </section>
+
+    <!-- Form Penjualan -->
+    <section>
+      <h2>Penjualan Produk</h2>
+      <form id="formPenjualan">
+        <select id="barangDijual" required>
+          <option value="">Pilih Produk</option>
+        </select>
+        <input type="number" id="jumlahJual" placeholder="Jumlah" required />
+        <button type="submit">Jual</button>
+      </form>
+    </section>
+
+    <!-- Daftar Penjualan -->
+    <section>
+      <h2>Daftar Penjualan</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Nama</th>
+            <th>Jumlah</th>
+            <th>Total Harga</th>
+          </tr>
+        </thead>
+        <tbody id="tabelPenjualan"></tbody>
+      </table>
+    </section>
+  </div>
+
+  <!-- JavaScript -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      let stok = JSON.parse(localStorage.getItem("stok")) || [];
+      let penjualan = JSON.parse(localStorage.getItem("penjualan")) || [];
+
+      const formTambah = document.getElementById("formTambahBarang");
+      const formJual = document.getElementById("formPenjualan");
+      const tabelStok = document.getElementById("tabelStok");
+      const tabelPenjualan = document.getElementById("tabelPenjualan");
+      const selectJual = document.getElementById("barangDijual");
+
+      const simpan = () => {
+        localStorage.setItem("stok", JSON.stringify(stok));
+        localStorage.setItem("penjualan", JSON.stringify(penjualan));
+      };
+
+      const updateStok = () => {
+        tabelStok.innerHTML = "";
+        selectJual.innerHTML = `<option value="">Pilih Produk</option>`;
+
+        stok.forEach((item, i) => {
+          const row = `
+            <tr>
+              <td>${item.nama}</td>
+              <td>${item.jumlah}</td>
+              <td>Rp ${item.harga.toLocaleString()}</td>
+              <td><button onclick="hapusBarang(${i})">Hapus</button></td>
+            </tr>`;
+          tabelStok.innerHTML += row;
+
+          const option = document.createElement("option");
+          option.value = i;
+          option.textContent = item.nama;
+          selectJual.appendChild(option);
+        });
+      };
+
+      const updatePenjualan = () => {
+        tabelPenjualan.innerHTML = "";
+        penjualan.forEach(j => {
+          const row = `
+            <tr>
+              <td>${j.nama}</td>
+              <td>${j.jumlah}</td>
+              <td>Rp ${j.totalHarga.toLocaleString()}</td>
+            </tr>`;
+          tabelPenjualan.innerHTML += row;
+        });
+      };
+
+      formTambah.addEventListener("submit", e => {
+        e.preventDefault();
+        const nama = document.getElementById("namaBarang").value.trim();
+        const jumlah = parseInt(document.getElementById("stokBarang").value);
+        const harga = parseInt(document.getElementById("hargaBarang").value);
+
+        if (!nama || jumlah <= 0 || harga <= 0) {
+          alert("Input tidak valid!");
+          return;
+        }
+
+        const index = stok.findIndex(b => b.nama.toLowerCase() === nama.toLowerCase());
+        if (index >= 0) {
+          stok[index].jumlah += jumlah;
+        } else {
+          stok.push({ nama, jumlah, harga });
+        }
+
+        simpan();
+        updateStok();
+        formTambah.reset();
+      });
+
+      formJual.addEventListener("submit", e => {
+        e.preventDefault();
+        const index = parseInt(selectJual.value);
+        const jumlahJual = parseInt(document.getElementById("jumlahJual").value);
+
+        if (isNaN(index) || jumlahJual <= 0) {
+          alert("Data penjualan tidak valid!");
+          return;
+        }
+
+        const barang = stok[index];
+        if (barang.jumlah < jumlahJual) {
+          alert("Stok tidak mencukupi!");
+          return;
+        }
+
+        barang.jumlah -= jumlahJual;
+        const totalHarga = barang.harga * jumlahJual;
+        penjualan.push({ nama: barang.nama, jumlah: jumlahJual, totalHarga });
+
+        simpan();
+        updateStok();
+        updatePenjualan();
+        formJual.reset();
+      });
+
+      window.hapusBarang = i => {
+        if (confirm("Yakin ingin menghapus produk ini?")) {
+          stok.splice(i, 1);
+          simpan();
+          updateStok();
+        }
+      };
+
+      updateStok();
+      updatePenjualan();
+    });
+  </script>
+</body>
+</html>
